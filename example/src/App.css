@@ -1,0 +1,11 @@
+.App {
+  padding: 8px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.7;
+}
+
+.logs {
+  word-break: break-all;
+}

@@ -1,7 +1,7 @@
-import { ExampleComponent } from '.'
+import Wallet from '.';
 
-describe('ExampleComponent', () => {
+describe('Wallet', () => {
   it('is truthy', () => {
-    expect(ExampleComponent).toBeTruthy()
-  })
-})
+    expect(Wallet).toBeTruthy();
+  });
+});
