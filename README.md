@@ -42,7 +42,7 @@ See [create-react-library](https://github.com/transitive-bullshit/create-react-l
 
 ## Wallet Providers
 
-`sol-wallet-adapter` opens wallet providers in a popup and communicates with it using [JSON-RPC](https://www.jsonrpc.org/specification) over [`postMessage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage).
+Wallet providers are third-party webapps that provide an API to retrieve the user's accounts and sign transactions with it. `sol-wallet-adapter` opens wallet providers in a popup and communicates with it using [JSON-RPC](https://www.jsonrpc.org/specification) over [`postMessage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage).
 
 See [`spl-token-wallet`](https://github.com/serum-foundation/spl-token-wallet/blob/master/src/pages/PopupPage.js) for an example wallet provider implementation.
 
@@ -69,12 +69,20 @@ The general flow is as follows:
 7. The wallet sends a JSON-RPC reply back to the dApp, either with a signature if the user accepted the request or an error if the user rejected the request.
 8. The dApp receives the signature, adds it to the transaction, and broadcasts it.
 
-Wallet provider developers can use the example webapp from this repository to test their implementation.
+Wallet provider developers can use the [example webapp](https://github.com/serum-foundation/sol-wallet-adapter/tree/master/example) to test their implementation.
 
 ### URL hash parameters
 
 - `origin` - origin of the dApp. Should be included in all `postMessage` calls and should be checked against all received `MessageEvent`s.
 - `network` - The network on which transactions will be sent. Can be any of `mainnet-beta`, `devnet`, `testnet`, or a custom URL, though wallets are free to reject any unsupported networks. Wallet providers should check that transaction blockhashes matches the network before signing the transaction.
+
+The parameters can be parsed using
+
+```js
+let params = new URLSearchParams(window.location.hash.slice(1));
+let origin = params.get('origin');
+let network = params.get('network');
+```
 
 ### Requests from the wallet provider to the dApp (`sol-wallet-adapter`)
 
@@ -89,7 +97,7 @@ Sent by the wallet provider when the user selects an account to connect to the d
 ##### Example
 
 ```js
-postMessage({
+window.opener.postMessage({
   jsonrpc: '2.0',
   method: 'connected',
   params: {
@@ -110,7 +118,7 @@ None.
 ##### Example
 
 ```js
-postMessage({
+window.opener.postMessage({
   jsonrpc: '2.0',
   method: 'disconnected',
 }, origin);
