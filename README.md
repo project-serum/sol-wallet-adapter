@@ -32,11 +32,11 @@ let txid = await connection.sendRawTransaction(signed.serialize());
 await connection.confirmTransaction(txid);
 ```
 
-See example/src/App.js for a full example.
+See [example/src/App.js](https://github.com/serum-foundation/sol-wallet-adapter/blob/master/example/src/App.js) for a full example.
 
 ## Development
 
-Run `yarn start`, then run `yarn start` in example.
+Run `yarn start` in the root directory, then run `yarn start` in the example directory.
 
 See [create-react-library](https://github.com/transitive-bullshit/create-react-library#development) for details.
 
@@ -55,18 +55,21 @@ The general flow is as follows:
     - The wallet UI should show the origin of the requesting dApp.
     - The origin can be retrieved from the URL hash using `new URLSearchParams(window.location.hash.slice(1)).get('origin')`.
     - If the wallet provider supports multiple accounts, it should allow the user to select which account to use.
-4. If the user accepts, the wallet provider sends a JSON-RPC message using `postMessage` to `window.opener` targeting the dApp origin with the public key of the selected account.
+4. If the user accepts, the wallet provider sends a [`connected`](#connected) message to the dApp via `postMessage`.
     - e.g. ```window.opener.postMessage({jsonrpc: '2.0', method: 'connected', params: {publicKey: 'EdWqEgu54Zezi4E6L72RxAMPr5SWAyt2vpZWgvPYQTLh'}}, 'https://www.example.com')'```
     - To prevent origin spoofing, the `postMessage` call must set `targetOrigin` to the dApp origin that was shown to the user in step 3.
-5. When the dApp needs to send a transaction on behalf of the user, the dApp generates a transaction, base-58 encodes it, and sends it to the wallet provider via `postMessage` with method `signTransaction`.
-    - The wallet provider should listen for `message` events. Before processing a message event, it should verify that `event.origin` matches the dApp `origin` and `event.source === window.origin`.
+5. When the dApp needs to send a transaction on behalf of the user, the dApp generates a transaction and sends it to the wallet provider as a [`signTransaction`](#signtransaction) request using `postMessage`.
+    - The wallet provider should listen for `window.onmessage` events.
+    - Before processing a [MessageEvent](https://developer.mozilla.org/en-US/docs/Web/API/MessageEvent), the wallet provider should verify that `event.origin` matches the dApp `origin` and `event.source === window.origin`.
 6. The wallet provider decodes the transaction, presents it to the user, and asks the user if they would like to sign the transaction.
     - The wallet should inform the user about any potential effects of the transaction
     - For instructions that the wallet recognizes, the wallet can decode the instruction and show it to the user.
-    - For instructions that the wallet does not recognize, the wallet can e.g. show the set of writable addresses included in the instruction and the program IDs that own those addresses.
-    - The wallet can use the transaction blockhash to verify that the transaction will be broadcasted on the same network as requested.
+    - For instructions that the wallet does not recognize, the wallet can e.g. show the set of writable addresses included in the instruction and the programs to which those addresses belong.
+    - The wallet should use the transaction blockhash to verify that the transaction will be broadcasted on the correct network.
 7. The wallet sends a JSON-RPC reply back to the dApp, either with a signature if the user accepted the request or an error if the user rejected the request.
 8. The dApp receives the signature, adds it to the transaction, and broadcasts it.
+
+Wallet provider developers can use the example webapp from this repository to test their implementation.
 
 ### URL hash parameters
 
