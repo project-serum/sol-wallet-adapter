@@ -60,7 +60,7 @@ The general flow is as follows:
     - To prevent origin spoofing, the `postMessage` call must set `targetOrigin` to the dApp origin that was shown to the user in step 3.
 5. When the dApp needs to send a transaction on behalf of the user, the dApp generates a transaction and sends it to the wallet provider as a [`signTransaction`](#signtransaction) request using `postMessage`.
     - The wallet provider should listen for `window.onmessage` events.
-    - Before processing a [MessageEvent](https://developer.mozilla.org/en-US/docs/Web/API/MessageEvent), the wallet provider should verify that `event.origin` matches the dApp `origin` and `event.source === window.origin`.
+    - Before processing a [MessageEvent](https://developer.mozilla.org/en-US/docs/Web/API/MessageEvent), the wallet provider should verify that `event.origin` matches the dApp `origin` and `event.source === window.opener`.
 6. The wallet provider decodes the transaction, presents it to the user, and asks the user if they would like to sign the transaction.
     - The wallet should inform the user about any potential effects of the transaction
     - For instructions that the wallet recognizes, the wallet can decode the instruction and show it to the user.
