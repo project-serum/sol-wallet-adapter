@@ -1,21 +1,21 @@
 {
   "files": {
-    "main.css": "./static/css/main.66ec011b.chunk.css",
-    "main.js": "./static/js/main.d8453055.chunk.js",
-    "main.js.map": "./static/js/main.d8453055.chunk.js.map",
-    "runtime-main.js": "./static/js/runtime-main.1ffbb475.js",
-    "runtime-main.js.map": "./static/js/runtime-main.1ffbb475.js.map",
-    "static/js/2.4d988e9a.chunk.js": "./static/js/2.4d988e9a.chunk.js",
-    "static/js/2.4d988e9a.chunk.js.map": "./static/js/2.4d988e9a.chunk.js.map",
-    "index.html": "./index.html",
-    "precache-manifest.3a2e597f813918487cca8fadcffa34cc.js": "./precache-manifest.3a2e597f813918487cca8fadcffa34cc.js",
-    "service-worker.js": "./service-worker.js",
-    "static/css/main.66ec011b.chunk.css.map": "./static/css/main.66ec011b.chunk.css.map",
-    "static/js/2.4d988e9a.chunk.js.LICENSE.txt": "./static/js/2.4d988e9a.chunk.js.LICENSE.txt"
+    "main.css": "/sol-wallet-adapter/static/css/main.66ec011b.chunk.css",
+    "main.js": "/sol-wallet-adapter/static/js/main.d8453055.chunk.js",
+    "main.js.map": "/sol-wallet-adapter/static/js/main.d8453055.chunk.js.map",
+    "runtime-main.js": "/sol-wallet-adapter/static/js/runtime-main.a64c95aa.js",
+    "runtime-main.js.map": "/sol-wallet-adapter/static/js/runtime-main.a64c95aa.js.map",
+    "static/js/2.4f4b3921.chunk.js": "/sol-wallet-adapter/static/js/2.4f4b3921.chunk.js",
+    "static/js/2.4f4b3921.chunk.js.map": "/sol-wallet-adapter/static/js/2.4f4b3921.chunk.js.map",
+    "index.html": "/sol-wallet-adapter/index.html",
+    "precache-manifest.1d7044acce9624079940f2cb5cf3eda5.js": "/sol-wallet-adapter/precache-manifest.1d7044acce9624079940f2cb5cf3eda5.js",
+    "service-worker.js": "/sol-wallet-adapter/service-worker.js",
+    "static/css/main.66ec011b.chunk.css.map": "/sol-wallet-adapter/static/css/main.66ec011b.chunk.css.map",
+    "static/js/2.4f4b3921.chunk.js.LICENSE.txt": "/sol-wallet-adapter/static/js/2.4f4b3921.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
-    "static/js/runtime-main.1ffbb475.js",
-    "static/js/2.4d988e9a.chunk.js",
+    "static/js/runtime-main.a64c95aa.js",
+    "static/js/2.4f4b3921.chunk.js",
     "static/css/main.66ec011b.chunk.css",
     "static/js/main.d8453055.chunk.js"
   ]
