@@ -2,7 +2,7 @@
   "name": "@project-serum/sol-wallet-adapter",
   "version": "0.1.0",
   "description": "Library to allow Solana dApps to use third-party wallets to sign transactions",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": "serum-foundation/sol-wallet-adapter",
   "main": "dist/index.js",
   "module": "dist/index.modern.js",
