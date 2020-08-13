@@ -1,4 +1,4 @@
-[![npm (scoped)](https://img.shields.io/npm/v/@project-serum/sol-wallet-adapter)](https://www.npmjs.com/package/@project-serum/serum)
+[![npm (scoped)](https://img.shields.io/npm/v/@project-serum/sol-wallet-adapter)](https://www.npmjs.com/package/@project-serum/sol-wallet-adapter)
 [![Build Status](https://travis-ci.com/project-serum/sol-wallet-adapter.svg?branch=master)](https://travis-ci.com/project-serum/sol-wallet-adapter)
 
 # sol-wallet-adapter
