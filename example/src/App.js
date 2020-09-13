@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import './App.css';
 import Wallet from '@project-serum/sol-wallet-adapter';
-import { Connection, SystemProgram, clusterApiUrl } from '@solana/web3.js';
+import { Connection, SystemProgram, Transaction, clusterApiUrl } from '@solana/web3.js';
 
 function toHex(buffer) {
   return Array.prototype.map
@@ -51,21 +51,24 @@ function App() {
 
   async function sendTransaction() {
     try {
-      let transaction = SystemProgram.transfer({
-        fromPubkey: selectedWallet.publicKey,
-        toPubkey: selectedWallet.publicKey,
-        lamports: 100,
-      });
+      let transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: selectedWallet.publicKey,
+          toPubkey: selectedWallet.publicKey,
+          lamports: 100,
+        })
+      );
       addLog('Getting recent blockhash');
       transaction.recentBlockhash = (
         await connection.getRecentBlockhash()
       ).blockhash;
       addLog('Sending signature request to wallet');
+      transaction.feePayer = selectedWallet.publicKey;
       let signed = await selectedWallet.signTransaction(transaction);
       addLog('Got signature, submitting transaction');
       let signature = await connection.sendRawTransaction(signed.serialize());
       addLog('Submitted transaction ' + signature + ', awaiting confirmation');
-      await connection.confirmTransaction(signature, 1);
+      await connection.confirmTransaction(signature, 'singleGossip');
       addLog('Transaction ' + signature + ' confirmed');
     } catch (e) {
       console.warn(e);

@@ -16,7 +16,7 @@ npm install --save @project-serum/sol-wallet-adapter
 ### Sign a transaction
 
 ```js
-import { Connection, SystemProgram, clusterApiUrl } from '@solana/web3.js';
+import { Connection, SystemProgram, Transaction, clusterApiUrl } from '@solana/web3.js';
 
 let connection = new Connection(clusterApiUrl('devnet'));
 let providerUrl = 'https://www.sollet.io';
@@ -25,13 +25,16 @@ wallet.on('connect', publicKey => console.log('Connected to ' + publicKey.toBase
 wallet.on('disconnect', () => console.log('Disconnected'));
 await wallet.connect();
 
-let transaction = SystemProgram.transfer({
-  fromPubkey: wallet.publicKey,
-  toPubkey: wallet.publicKey,
-  lamports: 100,
-});
+let transaction = new Transaction().add(
+  SystemProgram.transfer({
+    fromPubkey: wallet.publicKey,
+    toPubkey: wallet.publicKey,
+    lamports: 100,
+  })
+);
 let { blockhash } = await connection.getRecentBlockhash();
 transaction.recentBlockhash = blockhash;
+transaction.feePayer = wallet.publicKey;
 let signed = await wallet.signTransaction(transaction);
 let txid = await connection.sendRawTransaction(signed.serialize());
 await connection.confirmTransaction(txid);
