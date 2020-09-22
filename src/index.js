@@ -11,6 +11,7 @@ export default class Wallet extends EventEmitter {
       network,
     }).toString();
     this._publicKey = null;
+    this._autoApprove = false;
     this._popup = null;
     this._handlerAdded = false;
     this._nextRequestId = 1;
@@ -24,6 +25,7 @@ export default class Wallet extends EventEmitter {
         if (!this._publicKey || !this._publicKey.equals(newPublicKey)) {
           this._handleDisconnect();
           this._publicKey = newPublicKey;
+          this._autoApprove = !!e.data.params.autoApprove;
           this.emit('connect', this._publicKey);
         }
       } else if (e.data.method === 'disconnected') {
@@ -69,7 +71,9 @@ export default class Wallet extends EventEmitter {
         },
         this._providerUrl.origin,
       );
-      this._popup.focus();
+      if (!this.autoApprove) {
+        this._popup.focus();
+      }
     });
   };
 
@@ -79,6 +83,10 @@ export default class Wallet extends EventEmitter {
 
   get connected() {
     return this._publicKey !== null;
+  }
+
+  get autoApprove() {
+    return this._autoApprove;
   }
 
   connect = () => {
