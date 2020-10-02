@@ -31,6 +31,10 @@ export default class Wallet extends EventEmitter {
     }
   }
 
+  _handleNetworkChanged(chainid) {
+    this.emit('connect', this._publicKey);
+  }
+
   _handleDisconnect = () => {
     if (this._publicKey) {
       this._publicKey = null;
@@ -66,6 +70,7 @@ export default class Wallet extends EventEmitter {
       throw new Error('EzDeFi not installed');
     }
     ethereum.on('accountsChanged', this._handleConnect.bind(this));
+    ethereum.on('chainChanged', this._handleNetworkChanged.bind(this));
     return ethereum.request({ method: 'wallet_requestAccounts' })
       .then(this._handleConnect.bind(this))
       .catch((err) => {
