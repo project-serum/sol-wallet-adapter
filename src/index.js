@@ -88,12 +88,8 @@ export default class Wallet extends EventEmitter {
     this._handleDisconnect();
   };
 
-  signTransaction = async (transaction) => {
-    const result = await this._sendRequest('wallet_sign', {
-      message: bs58.encode(transaction.serializeMessage()),
-    });
-    transaction.addSignature(new PublicKey(result.publicKey), Buffer.from(bs58.decode(result.signature)));
-    return transaction;
+  signMessage = (message) => {
+    return this._sendRequest('wallet_sign', {message});
   };
 
   sendTransaction = async (transaction) => {

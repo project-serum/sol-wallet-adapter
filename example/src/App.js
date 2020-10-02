@@ -1,14 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import './App.css';
 import Wallet from '@project-serum/sol-wallet-adapter';
-import { Connection, SystemProgram, clusterApiUrl } from '@solana/web3.js';
+import { Connection, SystemProgram, PublicKey, clusterApiUrl } from '@solana/web3.js';
+import bs58 from 'bs58';
 
 function App() {
   const [logs, setLogs] = useState([]);
   function addLog(log) {
     setLogs((logs) => [...logs, log]);
   }
-  const [signedMessage, setSignedMessage] = useState(null)
+  const [signedResult, setSignedResult] = useState(null)
 
   const [network, setNetwork] = useState('');
   const [state, setState] = useState('');
@@ -44,9 +45,10 @@ function App() {
         await connection.getRecentBlockhash()
       ).blockhash;
       addLog('Sending signature request to wallet');
-      let signed = await wallet.signTransaction(transaction);
+      let result = await wallet.signMessage(bs58.encode(transaction.serializeMessage()));
+      transaction.addSignature(new PublicKey(result.publicKey), Buffer.from(bs58.decode(result.signature)));
       addLog('Signed by EzDeFi extension');
-      setSignedMessage(signed)
+      setSignedResult(result)
     } catch (e) {
       console.warn(e);
       addLog('Error: ' + e.message);
@@ -93,9 +95,9 @@ function App() {
           <div key={i}>{log}</div>
         ))}
       </div>
-      {signedMessage && 
+      {signedResult && 
       <div className="signed-message">
-        <textarea disabled={true} cols={72} rows={30} value={JSON.stringify(signedMessage, undefined, 1)}/>
+        <textarea disabled={true} cols={72} rows={30} value={JSON.stringify(signedResult, undefined, 2)}/>
       </div>}
     </div>
   );
