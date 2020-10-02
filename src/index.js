@@ -3,45 +3,33 @@ import { PublicKey } from '@solana/web3.js';
 import bs58 from 'bs58';
 
 export default class Wallet extends EventEmitter {
-  constructor(providerUrl, network) {
+  constructor() {
     super();
-    this._providerUrl = new URL(providerUrl);
-    this._providerUrl.hash = new URLSearchParams({
-      origin: window.location.origin,
-      network,
-    }).toString();
     this._publicKey = null;
     this._autoApprove = false;
-    this._popup = null;
     this._handlerAdded = false;
     this._nextRequestId = 1;
     this._responsePromises = new Map();
   }
 
   _handleMessage = (e) => {
-    if (e.origin === this._providerUrl.origin && e.source === this._popup) {
-      if (e.data.method === 'connected') {
-        const newPublicKey = new PublicKey(e.data.params.publicKey);
-        if (!this._publicKey || !this._publicKey.equals(newPublicKey)) {
-          this._handleDisconnect();
-          this._publicKey = newPublicKey;
-          this._autoApprove = !!e.data.params.autoApprove;
-          this.emit('connect', this._publicKey);
-        }
-      } else if (e.data.method === 'disconnected') {
-        this._handleDisconnect();
-      } else if (e.data.result || e.data.error) {
-        if (this._responsePromises.has(e.data.id)) {
-          const [resolve, reject] = this._responsePromises.get(e.data.id);
-          if (e.data.result) {
-            resolve(e.data.result);
-          } else {
-            reject(new Error(e.data.error));
-          }
-        }
-      }
-    }
   };
+  
+  _handleConnect(accounts) {
+    if (accounts.length === 0) {
+      console.error('Please connect to EzDeFi.');
+      return;
+    }
+    try {
+      const newPublicKey = new PublicKey(accounts[0])
+      if (!this._publicKey || !this._publicKey.equals(newPublicKey)) {
+        this._publicKey = newPublicKey;
+        this.emit('connect', this._publicKey);
+      }
+    } catch(err) {
+      console.error(err)
+    }
+  }
 
   _handleDisconnect = () => {
     if (this._publicKey) {
@@ -58,23 +46,7 @@ export default class Wallet extends EventEmitter {
     if (!this.connected) {
       throw new Error('Wallet not connected');
     }
-    const requestId = this._nextRequestId;
-    ++this._nextRequestId;
-    return new Promise((resolve, reject) => {
-      this._responsePromises.set(requestId, [resolve, reject]);
-      this._popup.postMessage(
-        {
-          jsonrpc: '2.0',
-          id: requestId,
-          method,
-          params,
-        },
-        this._providerUrl.origin,
-      );
-      if (!this.autoApprove) {
-        this._popup.focus();
-      }
-    });
+    return ethereum.request({method, params})
   };
 
   get publicKey() {
@@ -90,39 +62,39 @@ export default class Wallet extends EventEmitter {
   }
 
   connect = () => {
-    if (this._popup) {
-      this._popup.close();
+    if (!ethereum) {
+      throw new Error('EzDeFi not installed');
     }
-    if (!this._handlerAdded) {
-      this._handlerAdded = true;
-      window.addEventListener('message', this._handleMessage);
-      window.addEventListener('beforeunload', this.disconnect);
-    }
-    window.name = 'parent';
-    this._popup = window.open(
-      this._providerUrl.toString(),
-      '_blank',
-      'location,resizable,width=460,height=675',
-    );
-    return new Promise((resolve) => {
-      this.once('connect', resolve);
-    });
+    ethereum.on('accountsChanged', this._handleConnect.bind(this));
+    return ethereum.request({ method: 'wallet_requestAccounts' })
+      .then(this._handleConnect.bind(this))
+      .catch((err) => {
+        if (err.code === 4001) {
+          // EIP-1193 userRejectedRequest error
+          // If this happens, the user rejected the connection request.
+          console.log('Please connect to EzDeFi or MetaMask');
+        } else {
+          console.error(err);
+        }
+      });
   };
 
   disconnect = () => {
-    if (this._popup) {
-      this._popup.close();
-    }
     this._handleDisconnect();
   };
 
   signTransaction = async (transaction) => {
-    const response = await this._sendRequest('signTransaction', {
+    const result = await this._sendRequest('wallet_sign', {
       message: bs58.encode(transaction.serializeMessage()),
     });
-    const signature = bs58.decode(response.signature);
-    const publicKey = new PublicKey(response.publicKey);
-    transaction.addSignature(publicKey, signature);
+    transaction.addSignature(new PublicKey(result.publicKey), Buffer.from(bs58.decode(result.signature)));
     return transaction;
   };
+
+  sendTransaction = async (transaction) => {
+    const result = await this._sendRequest('wallet_sendTransaction', {
+      message: bs58.encode(transaction.serializeMessage()),
+    });
+    console.error(result)
+  }
 }

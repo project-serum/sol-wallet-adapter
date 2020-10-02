@@ -9,19 +9,18 @@ function App() {
     setLogs((logs) => [...logs, log]);
   }
 
-  const network = clusterApiUrl('devnet');
-  const [providerUrl, setProviderUrl] = useState('https://www.sollet.io');
+  const [network, setNetwork] = useState('');
+  const [state, setState] = useState('');
 
   const connection = useMemo(() => new Connection(network), [network]);
-  const wallet = useMemo(() => new Wallet(providerUrl, network), [
-    providerUrl,
-    network,
-  ]);
+  const [wallet] = useState(new Wallet());
   const [, setConnected] = useState(false);
   useEffect(() => {
     wallet.on('connect', () => {
       setConnected(true);
       addLog('Connected to wallet ' + wallet.publicKey.toBase58());
+      wallet._sendRequest('wallet_getCluster').then(cluster => setNetwork(clusterApiUrl(cluster)))
+      wallet._sendRequest('wallet_getState').then(setState)
     });
     wallet.on('disconnect', () => {
       setConnected(false);
@@ -32,7 +31,7 @@ function App() {
     };
   }, [wallet]);
 
-  async function sendTransaction() {
+  async function signTransaction() {
     try {
       let transaction = SystemProgram.transfer({
         fromPubkey: wallet.publicKey,
@@ -45,11 +44,27 @@ function App() {
       ).blockhash;
       addLog('Sending signature request to wallet');
       let signed = await wallet.signTransaction(transaction);
-      addLog('Got signature, submitting transaction');
-      let signature = await connection.sendRawTransaction(signed.serialize());
-      addLog('Submitted transaction ' + signature + ', awaiting confirmation');
-      await connection.confirmTransaction(signature, 1);
-      addLog('Transaction ' + signature + ' confirmed');
+      addLog('Signed by EzDeFi: ' + JSON.stringify(signed.signatures));
+    } catch (e) {
+      console.warn(e);
+      addLog('Error: ' + e.message);
+    }
+  }
+
+  async function sendTransaction() {
+    try {
+      let transaction = SystemProgram.transfer({
+        fromPubkey: wallet.publicKey,
+        toPubkey: wallet.publicKey,
+        lamports: 100,
+      });
+      addLog('Getting recent blockhash');
+      transaction.recentBlockhash = (
+        await connection.getRecentBlockhash()
+      ).blockhash;
+      addLog('Sending transaction request to wallet');
+      let result = await wallet.sendTransaction(transaction);
+      addLog('Sent ' + result);
     } catch (e) {
       console.warn(e);
       addLog('Error: ' + e.message);
@@ -59,22 +74,16 @@ function App() {
   return (
     <div className="App">
       <h1>Wallet Adapter Demo</h1>
-      <div>Network: {network}</div>
-      <div>
-        Waller provider:{' '}
-        <input
-          type="text"
-          value={providerUrl}
-          onChange={(e) => setProviderUrl(e.target.value.trim())}
-        />
-      </div>
       {wallet.connected ? (
         <>
           <div>Wallet address: {wallet.publicKey.toBase58()}.</div>
-          <button onClick={sendTransaction}>Send Transaction</button>
+          <div>Wallet state: {state}</div>
+          <div>Network: {network}</div>
+          <button onClick={signTransaction}>Sign</button>
+          <button onClick={sendTransaction}>Send</button>
         </>
       ) : (
-        <button onClick={() => wallet.connect()}>Connect to Wallet</button>
+        <button onClick={() => wallet.connect()}>Connect</button>
       )}
       <hr />
       <div className="logs">
