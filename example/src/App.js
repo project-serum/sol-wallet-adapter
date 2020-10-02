@@ -8,6 +8,7 @@ function App() {
   function addLog(log) {
     setLogs((logs) => [...logs, log]);
   }
+  const [signedMessage, setSignedMessage] = useState(null)
 
   const [network, setNetwork] = useState('');
   const [state, setState] = useState('');
@@ -44,7 +45,8 @@ function App() {
       ).blockhash;
       addLog('Sending signature request to wallet');
       let signed = await wallet.signTransaction(transaction);
-      addLog('Signed by EzDeFi: ' + JSON.stringify(signed.signatures));
+      addLog('Signed by EzDeFi extension');
+      setSignedMessage(signed)
     } catch (e) {
       console.warn(e);
       addLog('Error: ' + e.message);
@@ -91,6 +93,10 @@ function App() {
           <div key={i}>{log}</div>
         ))}
       </div>
+      {signedMessage && 
+      <div className="signed-message">
+        <textarea disabled={true} cols={72} rows={30} value={JSON.stringify(signedMessage, undefined, 1)}/>
+      </div>}
     </div>
   );
 }
