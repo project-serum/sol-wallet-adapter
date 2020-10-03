@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import './App.css';
 import Wallet from '@project-serum/sol-wallet-adapter';
-import { Connection, SystemProgram, PublicKey, clusterApiUrl } from '@solana/web3.js';
+import { Connection, SystemProgram, PublicKey, clusterApiUrl, Transaction } from '@solana/web3.js';
 import bs58 from 'bs58';
 
 function App() {
@@ -35,15 +35,15 @@ function App() {
 
   async function signTransaction() {
     try {
-      let transaction = SystemProgram.transfer({
-        fromPubkey: wallet.publicKey,
-        toPubkey: wallet.publicKey,
-        lamports: 100,
-      });
       addLog('Getting recent blockhash');
-      transaction.recentBlockhash = (
-        await connection.getRecentBlockhash()
-      ).blockhash;
+      const recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
+      const transaction = new Transaction({recentBlockhash})
+        .add(SystemProgram.transfer({
+          fromPubkey: wallet.publicKey,
+          toPubkey: wallet.publicKey,
+          lamports: 1e9,
+        }))
+      transaction.setSigners(wallet.publicKey)
       addLog('Sending signature request to wallet');
       let result = await wallet.signMessage(bs58.encode(transaction.serializeMessage()));
       transaction.addSignature(new PublicKey(result.publicKey), Buffer.from(bs58.decode(result.signature)));
@@ -57,18 +57,20 @@ function App() {
 
   async function sendTransaction() {
     try {
-      let transaction = SystemProgram.transfer({
-        fromPubkey: wallet.publicKey,
-        toPubkey: wallet.publicKey,
-        lamports: 100,
-      });
       addLog('Getting recent blockhash');
-      transaction.recentBlockhash = (
-        await connection.getRecentBlockhash()
-      ).blockhash;
+      const recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
+      const tx = new Transaction({recentBlockhash})
+        .add(SystemProgram.transfer({
+          fromPubkey: wallet.publicKey,
+          toPubkey: wallet.publicKey,
+          lamports: '1.23e9',
+        }))
+      tx.setSigners(wallet.publicKey)
       addLog('Sending transaction request to wallet');
-      let result = await wallet.sendTransaction(transaction);
-      addLog('Sent ' + result);
+      const signature = await wallet.sendTransaction(tx);
+      addLog('Sent ' + signature);
+      await connection.confirmTransaction(signature, 1);
+      addLog('Transaction ' + signature + ' confirmed');
     } catch (e) {
       console.warn(e);
       addLog('Error: ' + e.message);

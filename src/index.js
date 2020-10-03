@@ -92,10 +92,10 @@ export default class Wallet extends EventEmitter {
     return this._sendRequest('wallet_sign', {message});
   };
 
-  sendTransaction = async (transaction) => {
-    const result = await this._sendRequest('wallet_sendTransaction', {
-      message: bs58.encode(transaction.serializeMessage()),
-    });
-    console.error(result)
+  sendTransaction = async (tx) => {
+    const signData = tx.serializeMessage();
+    const wireTx = tx._serialize(signData);
+    const message = bs58.encode(wireTx);
+    return this._sendRequest('wallet_sendTransaction', {message});
   }
 }
