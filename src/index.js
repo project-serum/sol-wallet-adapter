@@ -19,7 +19,7 @@ export default class Wallet extends EventEmitter {
   }
 
   _handleMessage = (e) => {
-    if (window.solana || (e.origin === this._providerUrl.origin && e.source === this._popup)) {
+    if ((window.solana && e.origin == window.location.origin) || (e.origin === this._providerUrl.origin && e.source === this._popup)) {
       if (e.data.method === 'connected') {
         const newPublicKey = new PublicKey(e.data.params.publicKey);
         if (!this._publicKey || !this._publicKey.equals(newPublicKey)) {
@@ -43,14 +43,37 @@ export default class Wallet extends EventEmitter {
     }
   };
 
-  _handleInjectedMessage = (method,params) => {
-    window.postMessage({
-      jsonrpc: '2.0',
-      method,
-      params,
-    }, window.location.origin);
+  _handleConnect = () => {
+    if (window.solana) {
+      return new Promise((resolve) => {
+        this._sendRequest('connect',{}).then(() => {}).catch(e => {});
+      });
+    }else {
+      window.name = 'parent';
+      this._popup = window.open(this._providerUrl.toString(), '_blank', 'location,resizable,width=460,height=675');
+      return new Promise((resolve) => {
+        this.once('connect', resolve);
+      });
+    }
   }
-
+  _handleSignTransaction = async (transaction) => {
+    if (window.solana) {
+      const response = await _this._sendRequest('signTransaction', {
+        message: transaction.serializeMessage().toString("hex")
+      });
+      const signature = Buffer.from(response.signature, "hex");
+      const publicKey = new PublicKey(response.publicKey);
+      transaction.addSignature(publicKey, signature);
+    }else{
+      const response = await _this._sendRequest('signTransaction', {
+        message: bs58.encode(transaction.serializeMessage())
+      });
+      const signature = bs58.decode(response.signature);
+      const publicKey = new PublicKey(response.publicKey);
+      transaction.addSignature(publicKey, signature);
+    }
+    return transaction;
+  }
   _handleDisconnect = () => {
     if (this._publicKey) {
       this._publicKey = null;
@@ -63,24 +86,36 @@ export default class Wallet extends EventEmitter {
   };
 
   _sendRequest = async (method, params) => {
-    if (!this.connected) {
+    if (method != 'connect' && !this.connected) {
       throw new Error('Wallet not connected');
     }
     const requestId = this._nextRequestId;
     ++this._nextRequestId;
     return new Promise((resolve, reject) => {
       this._responsePromises.set(requestId, [resolve, reject]);
-      (window.solana || this._popup).postMessage(
-        {
-          jsonrpc: '2.0',
-          id: requestId,
-          method,
-          params,
-        },
-        this._providerUrl.origin,
-      );
-      if (!this.autoApprove) {
-        this._popup.focus();
+      if (window.solana) {
+        window.solana.postMessage(
+          {
+            jsonrpc: '2.0',
+            id: requestId,
+            method,
+            params,
+            origin: window.location.origin
+          });
+      } else {
+        this._popup.postMessage(
+          {
+            jsonrpc: '2.0',
+            id: requestId,
+            method,
+            params,
+          },
+          this._providerUrl.origin,
+        );
+
+        if (!this.autoApprove) {
+          this._popup.focus();
+        }
       }
     });
   };
@@ -106,25 +141,7 @@ export default class Wallet extends EventEmitter {
       window.addEventListener('message', this._handleMessage);
       window.addEventListener('beforeunload', this.disconnect);
     }
-    window.name = 'parent';
-    if (window.solana) {
-      this._sendRequest('connect', {}).then(accounts => {
-        if (accounts && accounts.length > 0) {
-          this._handleInjectedMessage('connected',{
-            publicKey: accounts[0].publicKey
-          });
-        }
-      });
-    }else{
-      this._popup = window.open(
-        this._providerUrl.toString(),
-        '_blank',
-        'location,resizable,width=460,height=675',
-      );
-    }
-    return new Promise((resolve) => {
-      this.once('connect', resolve);
-    });
+    return this._handleConnect();
   };
 
   disconnect = () => {
@@ -135,12 +152,7 @@ export default class Wallet extends EventEmitter {
   };
 
   signTransaction = async (transaction) => {
-    const response = await this._sendRequest('signTransaction', {
-      message: bs58.encode(transaction.serializeMessage()),
-    });
-    const signature = bs58.decode(response.signature);
-    const publicKey = new PublicKey(response.publicKey);
-    transaction.addSignature(publicKey, signature);
-    return transaction;
+    const signedTransaction = await this._handleSignTransaction(transaction);
+    return signedTransaction;
   };
 }
