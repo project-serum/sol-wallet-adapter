@@ -28,11 +28,15 @@ export default class Wallet extends EventEmitter {
       }
     } catch(err) {
       console.error(err)
+      this._publicKey = undefined;
+      this.emit('connect', this._publicKey);
     }
   }
 
   _handleNetworkChanged(chainid) {
-    this.emit('connect', this._publicKey);
+    if (this._publicKey) {
+      this.emit('connect', this._publicKey);
+    }
   }
 
   _handleDisconnect = () => {
