@@ -1,6 +1,7 @@
 import EventEmitter from 'eventemitter3';
 import { PublicKey } from '@solana/web3.js';
 import bs58 from 'bs58';
+const solana = window.solana
 
 export default class Wallet extends EventEmitter {
   constructor() {
@@ -54,7 +55,7 @@ export default class Wallet extends EventEmitter {
     if (!this.connected) {
       throw new Error('Wallet not connected');
     }
-    return ethereum.request({method, params})
+    return solana.request({method, params})
   };
 
   get publicKey() {
@@ -70,12 +71,12 @@ export default class Wallet extends EventEmitter {
   }
 
   connect = () => {
-    if (!ethereum) {
+    if (!solana) {
       throw new Error('EzDeFi not installed');
     }
-    ethereum.on('accountsChanged', this._handleConnect.bind(this));
-    ethereum.on('chainChanged', this._handleNetworkChanged.bind(this));
-    return ethereum.request({ method: 'wallet_requestAccounts' })
+    solana.on('accountsChanged', this._handleConnect.bind(this));
+    solana.on('chainChanged', this._handleNetworkChanged.bind(this));
+    return solana.request({ method: 'wallet_requestAccounts' })
       .then(this._handleConnect.bind(this))
       .catch((err) => {
         if (err.code === 4001) {
