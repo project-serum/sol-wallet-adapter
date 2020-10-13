@@ -70,6 +70,8 @@ export default class Wallet extends EventEmitter {
     return this._autoApprove;
   }
 
+  isInjected = () => !!window.solana
+
   connect = () => {
     if (!solana) {
       throw new Error('EzDeFi not installed');
