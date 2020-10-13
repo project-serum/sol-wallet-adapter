@@ -57,21 +57,12 @@ export default class Wallet extends EventEmitter {
     }
   }
   _handleSignTransaction = async (transaction) => {
-    if (window.solana) {
-      const response = await _this._sendRequest('signTransaction', {
-        message: transaction.serializeMessage().toString("hex")
-      });
-      const signature = Buffer.from(response.signature, "hex");
-      const publicKey = new PublicKey(response.publicKey);
-      transaction.addSignature(publicKey, signature);
-    }else{
-      const response = await _this._sendRequest('signTransaction', {
-        message: bs58.encode(transaction.serializeMessage())
-      });
-      const signature = bs58.decode(response.signature);
-      const publicKey = new PublicKey(response.publicKey);
-      transaction.addSignature(publicKey, signature);
-    }
+    var response = await _this._sendRequest('signTransaction', {
+      message: bs58.encode(transaction.serializeMessage())
+    });
+    const signature = bs58.decode(response.signature);
+    const publicKey = new PublicKey(response.publicKey);
+    transaction.addSignature(publicKey, signature);
     return transaction;
   }
   _handleDisconnect = () => {
