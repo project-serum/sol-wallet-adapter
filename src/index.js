@@ -56,15 +56,6 @@ export default class Wallet extends EventEmitter {
       });
     }
   }
-  _handleSignTransaction = async (transaction) => {
-    var response = await _this._sendRequest('signTransaction', {
-      message: bs58.encode(transaction.serializeMessage())
-    });
-    const signature = bs58.decode(response.signature);
-    const publicKey = new PublicKey(response.publicKey);
-    transaction.addSignature(publicKey, signature);
-    return transaction;
-  }
   _handleDisconnect = () => {
     if (this._publicKey) {
       this._publicKey = null;
@@ -143,7 +134,12 @@ export default class Wallet extends EventEmitter {
   };
 
   signTransaction = async (transaction) => {
-    const signedTransaction = await this._handleSignTransaction(transaction);
-    return signedTransaction;
+    const response = await this._sendRequest('signTransaction', {
+      message: bs58.encode(transaction.serializeMessage()),
+    });
+    const signature = bs58.decode(response.signature);
+    const publicKey = new PublicKey(response.publicKey);
+    transaction.addSignature(publicKey, signature);
+    return transaction;
   };
 }
