@@ -46,9 +46,9 @@ export default class Wallet extends EventEmitter {
   _handleConnect = () => {
     if (window.solana) {
       return new Promise((resolve) => {
-        this._sendRequest('connect',{}).then(() => {}).catch(e => {});
+        this._sendRequest('connect', {}).then(() => { }).catch(e => { });
       });
-    }else {
+    } else {
       window.name = 'parent';
       this._popup = window.open(this._providerUrl.toString(), '_blank', 'location,resizable,width=460,height=675');
       return new Promise((resolve) => {
@@ -81,8 +81,7 @@ export default class Wallet extends EventEmitter {
             jsonrpc: '2.0',
             id: requestId,
             method,
-            params,
-            origin: window.location.origin
+            params
           });
       } else {
         this._popup.postMessage(
