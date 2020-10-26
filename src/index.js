@@ -49,9 +49,7 @@ export default class Wallet extends EventEmitter {
   _handleConnect = () => {
     if (window.solana) {
       return new Promise((resolve) => {
-        this._sendRequest('connect', {})
-          .then(() => { })
-          .catch((e) => { });
+        this._sendRequest('connect', {});
       });
     } else {
       window.name = 'parent';
