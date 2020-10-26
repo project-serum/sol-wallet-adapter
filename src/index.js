@@ -63,6 +63,7 @@ export default class Wallet extends EventEmitter {
       });
     }
   };
+
   _handleDisconnect = () => {
     if (this._publicKey) {
       this._publicKey = null;
