@@ -77,7 +77,7 @@ export default class Wallet extends EventEmitter {
   };
 
   _sendRequest = async (method, params) => {
-    if (method != 'connect' && !this.connected) {
+    if (method !== 'connect' && !this.connected) {
       throw new Error('Wallet not connected');
     }
     const requestId = this._nextRequestId;
