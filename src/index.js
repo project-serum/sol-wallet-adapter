@@ -20,7 +20,7 @@ export default class Wallet extends EventEmitter {
 
   _handleMessage = (e) => {
     if (
-      (window.solana && e.origin === window.location.origin) ||
+      (window.solana && e.origin === e.source.location.origin) ||
       (e.origin === this._providerUrl.origin && e.source === this._popup)
     ) {
       if (e.data.method === 'connected') {
