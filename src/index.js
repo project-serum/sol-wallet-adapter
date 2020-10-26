@@ -19,7 +19,10 @@ export default class Wallet extends EventEmitter {
   }
 
   _handleMessage = (e) => {
-    if ((window.solana && e.origin == window.location.origin) || (e.origin === this._providerUrl.origin && e.source === this._popup)) {
+    if (
+      (window.solana && e.origin == window.location.origin) ||
+      (e.origin === this._providerUrl.origin && e.source === this._popup)
+    ) {
       if (e.data.method === 'connected') {
         const newPublicKey = new PublicKey(e.data.params.publicKey);
         if (!this._publicKey || !this._publicKey.equals(newPublicKey)) {
@@ -46,16 +49,22 @@ export default class Wallet extends EventEmitter {
   _handleConnect = () => {
     if (window.solana) {
       return new Promise((resolve) => {
-        this._sendRequest('connect', {}).then(() => { }).catch(e => { });
+        this._sendRequest('connect', {})
+          .then(() => {})
+          .catch((e) => {});
       });
     } else {
       window.name = 'parent';
-      this._popup = window.open(this._providerUrl.toString(), '_blank', 'location,resizable,width=460,height=675');
+      this._popup = window.open(
+        this._providerUrl.toString(),
+        '_blank',
+        'location,resizable,width=460,height=675',
+      );
       return new Promise((resolve) => {
         this.once('connect', resolve);
       });
     }
-  }
+  };
   _handleDisconnect = () => {
     if (this._publicKey) {
       this._publicKey = null;
@@ -76,13 +85,12 @@ export default class Wallet extends EventEmitter {
     return new Promise((resolve, reject) => {
       this._responsePromises.set(requestId, [resolve, reject]);
       if (window.solana) {
-        window.solana.postMessage(
-          {
-            jsonrpc: '2.0',
-            id: requestId,
-            method,
-            params
-          });
+        window.solana.postMessage({
+          jsonrpc: '2.0',
+          id: requestId,
+          method,
+          params,
+        });
       } else {
         this._popup.postMessage(
           {
