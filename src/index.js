@@ -20,7 +20,7 @@ export default class Wallet extends EventEmitter {
 
   _handleMessage = (e) => {
     if (
-      (window.solana && e.origin == window.location.origin) ||
+      (window.solana && e.origin === window.location.origin) ||
       (e.origin === this._providerUrl.origin && e.source === this._popup)
     ) {
       if (e.data.method === 'connected') {
@@ -50,8 +50,8 @@ export default class Wallet extends EventEmitter {
     if (window.solana) {
       return new Promise((resolve) => {
         this._sendRequest('connect', {})
-          .then(() => {})
-          .catch((e) => {});
+          .then(() => { })
+          .catch((e) => { });
       });
     } else {
       window.name = 'parent';
