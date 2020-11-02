@@ -20,6 +20,7 @@ export default class Wallet extends EventEmitter {
   }
 
   _validSolanaInjecter = () => {
+    console.log("_validSolanaInjecter");
     return window.solana && window.solana.providerUrl && window.solana.providerUrl.origin === this._providerUrl.origin;
   }
 
