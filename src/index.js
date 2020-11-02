@@ -19,9 +19,13 @@ export default class Wallet extends EventEmitter {
     this._useInjectedInterface = false;
   }
 
+  _validSolanaInjecter = () => {
+    return window.solana && window.solana.providerUrl && window.solana.providerUrl.origin === this._providerUrl.origin;
+  }
+
   _handleMessage = (e) => {
     if (
-      (this._useInjectedInterface && window.solana && e.source === window) ||
+      (this._validSolanaInjecter() && e.source === window) ||
       (e.origin === this._providerUrl.origin && e.source === this._popup)
     ) {
       if (e.data.method === 'connected') {
@@ -48,7 +52,7 @@ export default class Wallet extends EventEmitter {
   };
 
   _handleConnect = () => {
-    if (this._useInjectedInterface && window.solana) {
+    if (this._validSolanaInjecter()) {
       return new Promise((resolve) => {
         this._sendRequest('connect', {});
       });
@@ -84,7 +88,7 @@ export default class Wallet extends EventEmitter {
     ++this._nextRequestId;
     return new Promise((resolve, reject) => {
       this._responsePromises.set(requestId, [resolve, reject]);
-      if (this._useInjectedInterface && window.solana) {
+      if (this._validSolanaInjecter()) {
         window.solana.postMessage({
           jsonrpc: '2.0',
           id: requestId,
