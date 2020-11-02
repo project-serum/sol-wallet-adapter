@@ -20,8 +20,12 @@ export default class Wallet extends EventEmitter {
   }
 
   _validSolanaInjecter = () => {
-    return (window.solana && window.solana.providerUrl && window.solana.providerUrl.origin === this._providerUrl.origin);
-  }
+    return (
+      window.solana &&
+      window.solana.providerUrl &&
+      window.solana.providerUrl.origin === this._providerUrl.origin
+    );
+  };
 
   _handleMessage = (e) => {
     if (
