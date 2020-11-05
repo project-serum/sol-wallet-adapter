@@ -8,7 +8,7 @@ Library to allow Solana dApps to use third-party wallets to sign transactions.
 ## Install
 
 ```bash
-npm install --save sol-wallet-adapter
+npm install --save @project-serum/sol-wallet-adapter
 ```
 
 ## Usage
