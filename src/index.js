@@ -16,7 +16,6 @@ export default class Wallet extends EventEmitter {
     this._handlerAdded = false;
     this._nextRequestId = 1;
     this._responsePromises = new Map();
-    this._useInjectedInterface = false;
   }
 
   _validSolanaInjecter = () => {
