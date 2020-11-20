@@ -5,18 +5,23 @@ import bs58 from 'bs58';
 export default class Wallet extends EventEmitter {
   constructor(providerUrl, network) {
     super();
-    this._providerUrl = new URL(providerUrl);
-    this._providerUrl.hash = new URLSearchParams({
-      origin: window.location.origin,
-      network,
-    }).toString();
+    try {
+      this._providerUrl = new URL(providerUrl);
+      this._providerUrl.hash = new URLSearchParams({
+        origin: window.location.origin,
+        network,
+      }).toString();
+      this._useInjectedInterface = false;
+    } catch (err) {
+      // invalid URL, use injected interface
+      this._useInjectedInterface = true;
+    }
     this._publicKey = null;
     this._autoApprove = false;
     this._popup = null;
     this._handlerAdded = false;
     this._nextRequestId = 1;
     this._responsePromises = new Map();
-    this._useInjectedInterface = false;
   }
 
   _handleMessage = (e) => {
