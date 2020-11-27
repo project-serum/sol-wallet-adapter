@@ -65,7 +65,7 @@ function App() {
         <input
           type="text"
           value={providerUrl}
-          onChange={(e) => setProviderUrl(e.target.value.trim())}
+          onChange={(e) => setProviderUrl(e.target.value.trim() || window.solana)}
         />
       </div>
       {wallet.connected ? (

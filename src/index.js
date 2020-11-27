@@ -5,16 +5,14 @@ import bs58 from 'bs58';
 export default class Wallet extends EventEmitter {
   constructor(providerUrl, network) {
     super();
-    try {
+    if (isInjectedProvider(providerUrl)) {
+      this._injectedProvider = providerUrl;
+    } else {
       this._providerUrl = new URL(providerUrl);
       this._providerUrl.hash = new URLSearchParams({
         origin: window.location.origin,
         network,
       }).toString();
-      this._useInjectedInterface = false;
-    } catch (err) {
-      // invalid URL, use injected interface
-      this._useInjectedInterface = true;
     }
     this._publicKey = null;
     this._autoApprove = false;
@@ -26,7 +24,7 @@ export default class Wallet extends EventEmitter {
 
   _handleMessage = (e) => {
     if (
-      (this._useInjectedInterface && window.solana && e.source === window) ||
+      (this._injectedProvider && e.source === window) ||
       (e.origin === this._providerUrl.origin && e.source === this._popup)
     ) {
       if (e.data.method === 'connected') {
@@ -53,7 +51,7 @@ export default class Wallet extends EventEmitter {
   };
 
   _handleConnect = () => {
-    if (this._useInjectedInterface && window.solana) {
+    if (this._injectedProvider) {
       return new Promise((resolve) => {
         this._sendRequest('connect', {});
       });
@@ -89,8 +87,8 @@ export default class Wallet extends EventEmitter {
     ++this._nextRequestId;
     return new Promise((resolve, reject) => {
       this._responsePromises.set(requestId, [resolve, reject]);
-      if (this._useInjectedInterface && window.solana) {
-        window.solana.postMessage({
+      if (this._injectedProvider) {
+        this._injectedProvider.postMessage({
           jsonrpc: '2.0',
           id: requestId,
           method,
@@ -154,4 +152,16 @@ export default class Wallet extends EventEmitter {
     transaction.addSignature(publicKey, signature);
     return transaction;
   };
+}
+
+function isInjectedProvider(a) {
+  return isObject(a) && isFunction(a.postMessage);
+}
+
+function isObject(a) {
+  return typeof a === 'object' && a !== null;
+}
+
+function isFunction(a) {
+  return typeof a === 'function';
 }
