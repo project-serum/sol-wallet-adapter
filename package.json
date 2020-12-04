@@ -58,6 +58,7 @@
   },
   "dependencies": {
     "bs58": "^4.0.1",
+    "dot-prop": "^6.0.1",
     "eventemitter3": "^4.0.4"
   }
 }

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import './App.css';
 import Wallet from '@project-serum/sol-wallet-adapter';
 import { Connection, SystemProgram, clusterApiUrl } from '@solana/web3.js';
+import dotProp from 'dot-prop';
 
 function App() {
   const [logs, setLogs] = useState([]);
@@ -11,11 +12,13 @@ function App() {
 
   const network = clusterApiUrl('devnet');
   const [providerUrl, setProviderUrl] = useState('https://www.sollet.io');
+  const [injectedPath, setInjectedPath] = useState('window.solana');
 
   const connection = useMemo(() => new Connection(network), [network]);
-  const wallet = useMemo(() => new Wallet(providerUrl, network), [
+  const wallet = useMemo(() => new Wallet(providerUrl, network, dotProp.get({window: {solana: window.solana}}, injectedPath)), [
     providerUrl,
     network,
+    injectedPath,
   ]);
   const [, setConnected] = useState(false);
   useEffect(() => {
@@ -66,6 +69,14 @@ function App() {
           type="text"
           value={providerUrl}
           onChange={(e) => setProviderUrl(e.target.value.trim() || window.solana)}
+        />
+      </div>
+      <div>
+        Injected path:{' '}
+        <input
+          type="text"
+          value={injectedPath}
+          onChange={(e) => setInjectedPath(e.target.value.trim())}
         />
       </div>
       {wallet.connected ? (

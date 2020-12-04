@@ -3,17 +3,16 @@ import { PublicKey } from '@solana/web3.js';
 import bs58 from 'bs58';
 
 export default class Wallet extends EventEmitter {
-  constructor(providerUrl, network) {
+  constructor(providerUrl, network, injectedProvider) {
     super();
-    if (isInjectedProvider(providerUrl)) {
-      this._injectedProvider = providerUrl;
-    } else {
-      this._providerUrl = new URL(providerUrl);
-      this._providerUrl.hash = new URLSearchParams({
-        origin: window.location.origin,
-        network,
-      }).toString();
+    if (injectedProvider && isInjectedProvider(injectedProvider)) {
+      this._injectedProvider = injectedProvider;
     }
+    this._providerUrl = new URL(providerUrl);
+    this._providerUrl.hash = new URLSearchParams({
+      origin: window.location.origin,
+      network,
+    }).toString();
     this._publicKey = null;
     this._autoApprove = false;
     this._popup = null;
