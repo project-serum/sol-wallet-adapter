@@ -152,15 +152,14 @@ export default class Wallet extends EventEmitter {
 
   signAllTransactions = async (transactions) => {
     const response = await this._sendRequest('signAllTransactions', {
-      messages: transactions.map(tx => bs58.encode(tx.serializeMessage())),
+      messages: transactions.map((tx) => bs58.encode(tx.serializeMessage())),
     });
-    const signatures = response.signatures.map(s => bs58.decode(s));
+    const signatures = response.signatures.map((s) => bs58.decode(s));
     const publicKey = new PublicKey(response.publicKey);
     transactions = transactions.map((tx, idx) => {
       tx.addSignature(publicKey, signatures[idx]);
       return tx;
     });
     return transactions;
-
-  }
+  };
 }
