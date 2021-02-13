@@ -11,32 +11,36 @@ function App() {
 
   const network = clusterApiUrl('devnet');
   const [providerUrl, setProviderUrl] = useState('https://www.sollet.io');
-
   const connection = useMemo(() => new Connection(network), [network]);
-  const wallet = useMemo(() => new Wallet(providerUrl, network), [
+  const urlWallet = useMemo(() => new Wallet(providerUrl, network), [
     providerUrl,
     network,
   ]);
+  const injectedWallet = useMemo(() => new Wallet(window.solana, network), [network]);
+  const [selectedWallet, setSelectedWallet] = useState(undefined);
   const [, setConnected] = useState(false);
   useEffect(() => {
-    wallet.on('connect', () => {
-      setConnected(true);
-      addLog('Connected to wallet ' + wallet.publicKey.toBase58());
-    });
-    wallet.on('disconnect', () => {
-      setConnected(false);
-      addLog('Disconnected from wallet');
-    });
-    return () => {
-      wallet.disconnect();
-    };
-  }, [wallet]);
+    if (selectedWallet) {
+      selectedWallet.on('connect', () => {
+        setConnected(true);
+        addLog('Connected to wallet ' + selectedWallet.publicKey.toBase58());
+      });
+      selectedWallet.on('disconnect', () => {
+        setConnected(false);
+        addLog('Disconnected from wallet');
+      });
+      selectedWallet.connect();
+      return () => {
+        selectedWallet.disconnect();
+      };
+    }
+  }, [selectedWallet]);
 
   async function sendTransaction() {
     try {
       let transaction = SystemProgram.transfer({
-        fromPubkey: wallet.publicKey,
-        toPubkey: wallet.publicKey,
+        fromPubkey: selectedWallet.publicKey,
+        toPubkey: selectedWallet.publicKey,
         lamports: 100,
       });
       addLog('Getting recent blockhash');
@@ -44,7 +48,7 @@ function App() {
         await connection.getRecentBlockhash()
       ).blockhash;
       addLog('Sending signature request to wallet');
-      let signed = await wallet.signTransaction(transaction);
+      let signed = await selectedWallet.signTransaction(transaction);
       addLog('Got signature, submitting transaction');
       let signature = await connection.sendRawTransaction(signed.serialize());
       addLog('Submitted transaction ' + signature + ', awaiting confirmation');
@@ -68,13 +72,17 @@ function App() {
           onChange={(e) => setProviderUrl(e.target.value.trim())}
         />
       </div>
-      {wallet.connected ? (
-        <>
-          <div>Wallet address: {wallet.publicKey.toBase58()}.</div>
+      {selectedWallet && selectedWallet.connected ? (
+        <div>
+          <div>Wallet address: {selectedWallet.publicKey.toBase58()}.</div>
           <button onClick={sendTransaction}>Send Transaction</button>
-        </>
+          <button onClick={() => selectedWallet.disconnect()}>Disconnect</button>
+        </div>
       ) : (
-        <button onClick={() => wallet.connect()}>Connect to Wallet</button>
+        <div>
+          <button onClick={() => setSelectedWallet(urlWallet)}>Connect to Wallet</button>
+          <button onClick={() => setSelectedWallet(injectedWallet)}>Connect to Injected Wallet</button>
+        </div>
       )}
       <hr />
       <div className="logs">
