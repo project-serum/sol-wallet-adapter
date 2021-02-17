@@ -3,31 +3,41 @@ import { PublicKey } from '@solana/web3.js';
 import bs58 from 'bs58';
 
 export default class Wallet extends EventEmitter {
-  constructor(providerUrl, network) {
+  constructor(provider, network) {
     super();
-    this._providerUrl = new URL(providerUrl);
-    this._providerUrl.hash = new URLSearchParams({
-      origin: window.location.origin,
-      network,
-    }).toString();
+    if (isInjectedProvider(provider)) {
+      this._injectedProvider = provider;
+    } else if (isString(provider)) {
+      this._providerUrl = new URL(provider);
+      this._providerUrl.hash = new URLSearchParams({
+        origin: window.location.origin,
+        network,
+      }).toString();
+    } else {
+      throw new Error(
+        'provider parameter must be an injected provider or a URL string.',
+      );
+    }
+    this._network = network;
     this._publicKey = null;
     this._autoApprove = false;
     this._popup = null;
     this._handlerAdded = false;
     this._nextRequestId = 1;
     this._responsePromises = new Map();
-    this._useInjectedInterface = false;
   }
 
   _handleMessage = (e) => {
     if (
-      (this._useInjectedInterface && window.solana && e.source === window) ||
+      (this._injectedProvider && e.source === window) ||
       (e.origin === this._providerUrl.origin && e.source === this._popup)
     ) {
       if (e.data.method === 'connected') {
         const newPublicKey = new PublicKey(e.data.params.publicKey);
         if (!this._publicKey || !this._publicKey.equals(newPublicKey)) {
-          this._handleDisconnect();
+          if (this._publicKey && !this._publicKey.equals(newPublicKey)) {
+            this._handleDisconnect();
+          }
           this._publicKey = newPublicKey;
           this._autoApprove = !!e.data.params.autoApprove;
           this.emit('connect', this._publicKey);
@@ -48,9 +58,10 @@ export default class Wallet extends EventEmitter {
   };
 
   _handleConnect = () => {
-    if (this._useInjectedInterface && window.solana) {
+    if (this._injectedProvider) {
       return new Promise((resolve) => {
         this._sendRequest('connect', {});
+        resolve();
       });
     } else {
       window.name = 'parent';
@@ -84,12 +95,15 @@ export default class Wallet extends EventEmitter {
     ++this._nextRequestId;
     return new Promise((resolve, reject) => {
       this._responsePromises.set(requestId, [resolve, reject]);
-      if (this._useInjectedInterface && window.solana) {
-        window.solana.postMessage({
+      if (this._injectedProvider) {
+        this._injectedProvider.postMessage({
           jsonrpc: '2.0',
           id: requestId,
           method,
-          params,
+          params: {
+            network: this._network,
+            ...params,
+          },
         });
       } else {
         this._popup.postMessage(
@@ -133,7 +147,10 @@ export default class Wallet extends EventEmitter {
     return this._handleConnect();
   };
 
-  disconnect = () => {
+  disconnect = async () => {
+    if (this._injectedProvider) {
+      await this._sendRequest('disconnect', {});
+    }
     if (this._popup) {
       this._popup.close();
     }
@@ -162,4 +179,20 @@ export default class Wallet extends EventEmitter {
     });
     return transactions;
   };
+}
+
+function isString(a) {
+  return typeof a === 'string';
+}
+
+function isInjectedProvider(a) {
+  return isObject(a) && isFunction(a.postMessage);
+}
+
+function isObject(a) {
+  return typeof a === 'object' && a !== null;
+}
+
+function isFunction(a) {
+  return typeof a === 'function';
 }
