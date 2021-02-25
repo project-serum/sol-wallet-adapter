@@ -115,10 +115,6 @@ export default class Wallet extends EventEmitter {
           },
           this._providerUrl.origin,
         );
-
-        if (!this.autoApprove) {
-          this._popup.focus();
-        }
       }
     });
   };
@@ -161,6 +157,11 @@ export default class Wallet extends EventEmitter {
     const response = await this._sendRequest('signTransaction', {
       message: bs58.encode(transaction.serializeMessage()),
     });
+
+    if (!this.autoApprove || !response.didAutoApprove) {
+      this._popup.focus();
+    }
+
     const signature = bs58.decode(response.signature);
     const publicKey = new PublicKey(response.publicKey);
     transaction.addSignature(publicKey, signature);
