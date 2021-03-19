@@ -3,6 +3,12 @@ import './App.css';
 import Wallet from '@project-serum/sol-wallet-adapter';
 import { Connection, SystemProgram, clusterApiUrl } from '@solana/web3.js';
 
+function toHex(buffer) {
+  return Array.prototype.map
+    .call(buffer, (x) => ('00' + x.toString(16)).slice(-2))
+    .join('');
+}
+
 function App() {
   const [logs, setLogs] = useState([]);
   function addLog(log) {
@@ -60,6 +66,19 @@ function App() {
     }
   }
 
+  async function signMessage() {
+    try {
+      const message = "Please sign this message for proof of address ownership.";
+      addLog('Sending message signature request to wallet');
+      const data = new TextEncoder().encode(message);
+      const signed = await selectedWallet.sign(data, 'hex');
+      addLog('Got signature: ' + toHex(signed.signature));
+    } catch (e) {
+      console.warn(e);
+      addLog('Error: ' + e.message);
+    }
+  }
+
   return (
     <div className="App">
       <h1>Wallet Adapter Demo</h1>
@@ -76,6 +95,7 @@ function App() {
         <div>
           <div>Wallet address: {selectedWallet.publicKey.toBase58()}.</div>
           <button onClick={sendTransaction}>Send Transaction</button>
+          <button onClick={signMessage}>Sign Message</button>
           <button onClick={() => selectedWallet.disconnect()}>Disconnect</button>
         </div>
       ) : (

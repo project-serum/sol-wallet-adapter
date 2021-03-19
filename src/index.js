@@ -157,6 +157,23 @@ export default class Wallet extends EventEmitter {
     this._handleDisconnect();
   };
 
+  sign = async (data, display) => {
+    if (!(data instanceof Uint8Array)) {
+      throw new Error('Data must be an instance of Uint8Array');
+    }
+
+    const response = await this._sendRequest('sign', {
+      data,
+      display,
+    });
+    const signature = bs58.decode(response.signature);
+    const publicKey = new PublicKey(response.publicKey);
+    return {
+      signature,
+      publicKey,
+    };
+  };
+
   signTransaction = async (transaction) => {
     const response = await this._sendRequest('signTransaction', {
       message: bs58.encode(transaction.serializeMessage()),
