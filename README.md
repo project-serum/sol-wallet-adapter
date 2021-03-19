@@ -13,6 +13,8 @@ npm install --save @project-serum/sol-wallet-adapter
 
 ## Usage
 
+### Sign a transaction
+
 ```js
 import { Connection, SystemProgram, clusterApiUrl } from '@solana/web3.js';
 
@@ -36,6 +38,20 @@ await connection.confirmTransaction(txid);
 ```
 
 See [example/src/App.js](https://github.com/serum-foundation/sol-wallet-adapter/blob/master/example/src/App.js) for a full example.
+
+### Sign a message
+
+```js
+const providerUrl = 'https://www.sollet.io';
+const wallet = new Wallet(providerUrl);
+wallet.on('connect', publicKey => console.log('Connected to ' + publicKey.toBase58()));
+wallet.on('disconnect', () => console.log('Disconnected'));
+await wallet.connect();
+
+const message = "Please sign this message for proof of address ownership.";
+const data = new TextEncoder().encode(message);
+let { signature } = await wallet.sign(data, 'utf8');
+```
 
 ## Development
 
