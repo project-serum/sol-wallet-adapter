@@ -159,7 +159,7 @@ export default class Wallet extends EventEmitter {
 
   sign = async (data, display) => {
     if (!(data instanceof Uint8Array)) {
-      throw new Error("Data must be an instance of Uint8Array");
+      throw new Error('Data must be an instance of Uint8Array');
     }
 
     const response = await this._sendRequest('sign', {
@@ -171,7 +171,7 @@ export default class Wallet extends EventEmitter {
     return {
       signature,
       publicKey,
-    }
+    };
   };
 
   signTransaction = async (transaction) => {
