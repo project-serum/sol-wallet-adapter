@@ -154,6 +154,11 @@ export default class Wallet extends EventEmitter {
     if (this._popup) {
       this._popup.close();
     }
+    if (this._handlerAdded) {
+      this._handlerAdded = false;
+      window.removeEventListener('message', this._handleMessage);
+      window.removeEventListener('beforeunload', this.disconnect);
+    }
     this._handleDisconnect();
   };
 
