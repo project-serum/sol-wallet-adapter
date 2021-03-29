@@ -58,6 +58,11 @@ export default class Wallet extends EventEmitter {
   };
 
   _handleConnect = () => {
+    if (!this._handlerAdded) {
+      this._handlerAdded = true;
+      window.addEventListener('message', this._handleMessage);
+      window.addEventListener('beforeunload', this.disconnect);
+    }
     if (this._injectedProvider) {
       return new Promise((resolve) => {
         this._sendRequest('connect', {});
@@ -77,6 +82,11 @@ export default class Wallet extends EventEmitter {
   };
 
   _handleDisconnect = () => {
+    if (this._handlerAdded) {
+      this._handlerAdded = false;
+      window.removeEventListener('message', this._handleMessage);
+      window.removeEventListener('beforeunload', this.disconnect);
+    }
     if (this._publicKey) {
       this._publicKey = null;
       this.emit('disconnect');
@@ -139,11 +149,6 @@ export default class Wallet extends EventEmitter {
     if (this._popup) {
       this._popup.close();
     }
-    if (!this._handlerAdded) {
-      this._handlerAdded = true;
-      window.addEventListener('message', this._handleMessage);
-      window.addEventListener('beforeunload', this.disconnect);
-    }
     return this._handleConnect();
   };
 
@@ -153,11 +158,6 @@ export default class Wallet extends EventEmitter {
     }
     if (this._popup) {
       this._popup.close();
-    }
-    if (this._handlerAdded) {
-      this._handlerAdded = false;
-      window.removeEventListener('message', this._handleMessage);
-      window.removeEventListener('beforeunload', this.disconnect);
     }
     this._handleDisconnect();
   };
