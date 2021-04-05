@@ -22,7 +22,14 @@ function App() {
     providerUrl,
     network,
   ]);
-  const injectedWallet = useMemo(() => new Wallet(window.solana, network), [network]);
+  const injectedWallet = useMemo(() => {
+    try {
+      return new Wallet(window.solana, network);
+    } catch (e) {
+      console.log(`Could not create injected wallet: ${e}`);
+      return null;
+    }
+  }, [network]);
   const [selectedWallet, setSelectedWallet] = useState(undefined);
   const [, setConnected] = useState(false);
   useEffect(() => {
