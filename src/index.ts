@@ -1,9 +1,18 @@
 import EventEmitter from 'eventemitter3';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
 import bs58 from 'bs58';
 
 export default class Wallet extends EventEmitter {
-  constructor(provider, network) {
+  private _providerUrl: URL | undefined;
+  private _injectedProvider: any;
+  private _publicKey: PublicKey | null = null;
+  private _popup: Window | null = null;
+  private _handlerAdded: boolean = false;
+  private _nextRequestId: number = 1;
+  private _autoApprove: boolean = false;
+  private _responsePromises: Map<number, [(value: string) => void, (reason: Error) => void]> = new Map();
+
+  constructor(provider: any, private _network: string) {
     super();
     if (isInjectedProvider(provider)) {
       this._injectedProvider = provider;
@@ -11,42 +20,35 @@ export default class Wallet extends EventEmitter {
       this._providerUrl = new URL(provider);
       this._providerUrl.hash = new URLSearchParams({
         origin: window.location.origin,
-        network,
+        network: this._network,
       }).toString();
     } else {
       throw new Error(
         'provider parameter must be an injected provider or a URL string.',
       );
     }
-    this._network = network;
-    this._publicKey = null;
-    this._autoApprove = false;
-    this._popup = null;
-    this._handlerAdded = false;
-    this._nextRequestId = 1;
-    this._responsePromises = new Map();
   }
 
-  _handleMessage = (e) => {
+  private handleMessage(e: any) {
     if (
       (this._injectedProvider && e.source === window) ||
-      (e.origin === this._providerUrl.origin && e.source === this._popup)
+      (e.origin === this._providerUrl?.origin && e.source === this._popup)
     ) {
       if (e.data.method === 'connected') {
         const newPublicKey = new PublicKey(e.data.params.publicKey);
         if (!this._publicKey || !this._publicKey.equals(newPublicKey)) {
           if (this._publicKey && !this._publicKey.equals(newPublicKey)) {
-            this._handleDisconnect();
+            this.handleDisconnect();
           }
           this._publicKey = newPublicKey;
           this._autoApprove = !!e.data.params.autoApprove;
           this.emit('connect', this._publicKey);
         }
       } else if (e.data.method === 'disconnected') {
-        this._handleDisconnect();
+        this.handleDisconnect();
       } else if (e.data.result || e.data.error) {
         if (this._responsePromises.has(e.data.id)) {
-          const [resolve, reject] = this._responsePromises.get(e.data.id);
+          const [resolve, reject] = this._responsePromises.get(e.data.id)!;
           if (e.data.result) {
             resolve(e.data.result);
           } else {
@@ -55,23 +57,23 @@ export default class Wallet extends EventEmitter {
         }
       }
     }
-  };
+  }
 
-  _handleConnect = () => {
+  private handleConnect() {
     if (!this._handlerAdded) {
       this._handlerAdded = true;
-      window.addEventListener('message', this._handleMessage);
+      window.addEventListener('message', this.handleMessage);
       window.addEventListener('beforeunload', this.disconnect);
     }
     if (this._injectedProvider) {
-      return new Promise((resolve) => {
-        this._sendRequest('connect', {});
+      return new Promise<void>((resolve) => {
+        this.sendRequest('connect', {});
         resolve();
       });
     } else {
       window.name = 'parent';
       this._popup = window.open(
-        this._providerUrl.toString(),
+        this._providerUrl?.toString(),
         '_blank',
         'location,resizable,width=460,height=675',
       );
@@ -79,12 +81,12 @@ export default class Wallet extends EventEmitter {
         this.once('connect', resolve);
       });
     }
-  };
+  }
 
-  _handleDisconnect = () => {
+  private handleDisconnect() {
     if (this._handlerAdded) {
       this._handlerAdded = false;
-      window.removeEventListener('message', this._handleMessage);
+      window.removeEventListener('message', this.handleMessage);
       window.removeEventListener('beforeunload', this.disconnect);
     }
     if (this._publicKey) {
@@ -93,11 +95,11 @@ export default class Wallet extends EventEmitter {
     }
     this._responsePromises.forEach(([resolve, reject], id) => {
       this._responsePromises.delete(id);
-      reject('Wallet disconnected');
+      reject(new Error('Wallet disconnected'));
     });
-  };
+  }
 
-  _sendRequest = async (method, params) => {
+  private async sendRequest(method: string, params) {
     if (method !== 'connect' && !this.connected) {
       throw new Error('Wallet not connected');
     }
@@ -116,22 +118,22 @@ export default class Wallet extends EventEmitter {
           },
         });
       } else {
-        this._popup.postMessage(
+        this._popup?.postMessage(
           {
             jsonrpc: '2.0',
             id: requestId,
             method,
             params,
           },
-          this._providerUrl.origin,
+          this._providerUrl?.origin ?? '',
         );
 
         if (!this.autoApprove) {
-          this._popup.focus();
+          this._popup?.focus();
         }
       }
     });
-  };
+  }
 
   get publicKey() {
     return this._publicKey;
@@ -145,32 +147,32 @@ export default class Wallet extends EventEmitter {
     return this._autoApprove;
   }
 
-  connect = () => {
+  connect() {
     if (this._popup) {
       this._popup.close();
     }
-    return this._handleConnect();
-  };
+    return this.handleConnect();
+  }
 
-  disconnect = async () => {
+  async disconnect() {
     if (this._injectedProvider) {
-      await this._sendRequest('disconnect', {});
+      await this.sendRequest('disconnect', {});
     }
     if (this._popup) {
       this._popup.close();
     }
-    this._handleDisconnect();
-  };
+    this.handleDisconnect();
+  }
 
-  sign = async (data, display) => {
+  async sign(data: Uint8Array, display: any) {
     if (!(data instanceof Uint8Array)) {
       throw new Error('Data must be an instance of Uint8Array');
     }
 
-    const response = await this._sendRequest('sign', {
+    const response = await this.sendRequest('sign', {
       data,
       display,
-    });
+    }) as {publicKey: string, signature: string};
     const signature = bs58.decode(response.signature);
     const publicKey = new PublicKey(response.publicKey);
     return {
@@ -179,20 +181,20 @@ export default class Wallet extends EventEmitter {
     };
   };
 
-  signTransaction = async (transaction) => {
-    const response = await this._sendRequest('signTransaction', {
+  async signTransaction(transaction: Transaction) {
+    const response = await this.sendRequest('signTransaction', {
       message: bs58.encode(transaction.serializeMessage()),
-    });
+    }) as {publicKey: string, signature: string};
     const signature = bs58.decode(response.signature);
     const publicKey = new PublicKey(response.publicKey);
     transaction.addSignature(publicKey, signature);
     return transaction;
-  };
+  }
 
-  signAllTransactions = async (transactions) => {
-    const response = await this._sendRequest('signAllTransactions', {
+  async signAllTransactions(transactions: Transaction[]) {
+    const response = await this.sendRequest('signAllTransactions', {
       messages: transactions.map((tx) => bs58.encode(tx.serializeMessage())),
-    });
+    }) as {publicKey: string, signatures: string[]};
     const signatures = response.signatures.map((s) => bs58.decode(s));
     const publicKey = new PublicKey(response.publicKey);
     transactions = transactions.map((tx, idx) => {
@@ -203,18 +205,18 @@ export default class Wallet extends EventEmitter {
   };
 }
 
-function isString(a) {
+function isString(a: any) {
   return typeof a === 'string';
 }
 
-function isInjectedProvider(a) {
+function isInjectedProvider(a: any) {
   return isObject(a) && isFunction(a.postMessage);
 }
 
-function isObject(a) {
+function isObject(a: any) {
   return typeof a === 'object' && a !== null;
 }
 
-function isFunction(a) {
+function isFunction(a: any) {
   return typeof a === 'function';
 }
