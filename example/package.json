@@ -10,10 +10,10 @@
     "eject": "node ../node_modules/react-scripts/bin/react-scripts.js eject"
   },
   "dependencies": {
+    "@project-serum/sol-wallet-adapter": "link:..",
     "react": "link:../node_modules/react",
     "react-dom": "link:../node_modules/react-dom",
-    "react-scripts": "link:../node_modules/react-scripts",
-    "@project-serum/sol-wallet-adapter": "link:.."
+    "react-scripts": "link:../node_modules/react-scripts"
   },
   "eslintConfig": {
     "extends": "react-app"
