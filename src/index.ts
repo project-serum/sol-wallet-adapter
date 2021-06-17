@@ -62,8 +62,8 @@ export default class Wallet extends EventEmitter {
   private handleConnect() {
     if (!this._handlerAdded) {
       this._handlerAdded = true;
-      window.addEventListener('message', this.handleMessage);
-      window.addEventListener('beforeunload', this.disconnect);
+      window.addEventListener('message', this.handleMessage.bind(this));
+      window.addEventListener('beforeunload', this.disconnect.bind(this));
     }
     if (this._injectedProvider) {
       return new Promise<void>((resolve) => {
@@ -87,7 +87,7 @@ export default class Wallet extends EventEmitter {
     if (this._handlerAdded) {
       this._handlerAdded = false;
       window.removeEventListener('message', this.handleMessage);
-      window.removeEventListener('beforeunload', this.disconnect);
+      window.removeEventListener('beforeunload', this.handleMessage);
     }
     if (this._publicKey) {
       this._publicKey = null;
