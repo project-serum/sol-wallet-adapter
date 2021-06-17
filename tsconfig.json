@@ -20,7 +20,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noImplicitAny": false,
-    "jsx": "react"
+    "jsx": "react",
+    "declaration": true
   },
   "include": [
     "./src/**/*"

@@ -11,7 +11,7 @@
     "node": ">=10"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "start": "tsc --watch",
     "clean": "rm -rf dist",
     "prepare": "run-s clean build",
