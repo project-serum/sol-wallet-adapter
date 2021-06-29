@@ -3,14 +3,11 @@
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
     "prettier"
   ],
   "parserOptions": {
-    "ecmaVersion": 2020,
-    "ecmaFeatures": {
-      "legacyDecorators": true,
-      "jsx": true
-    }
+    "project": "tsconfig.json"
   },
   "settings": {
     "react": {

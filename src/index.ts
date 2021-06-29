@@ -80,11 +80,11 @@ export default class Wallet extends EventEmitter {
     if (!this._handlerAdded) {
       this._handlerAdded = true;
       window.addEventListener('message', this.handleMessage);
-      window.addEventListener('beforeunload', this.disconnect);
+      window.addEventListener('beforeunload', this._beforeUnload);
     }
     if (this._injectedProvider) {
       return new Promise<void>((resolve) => {
-        this.sendRequest('connect', {});
+        void this.sendRequest('connect', {});
         resolve();
       });
     } else {
@@ -104,7 +104,7 @@ export default class Wallet extends EventEmitter {
     if (this._handlerAdded) {
       this._handlerAdded = false;
       window.removeEventListener('message', this.handleMessage);
-      window.removeEventListener('beforeunload', this.disconnect);
+      window.removeEventListener('beforeunload', this._beforeUnload);
     }
     if (this._publicKey) {
       this._publicKey = null;
@@ -116,7 +116,7 @@ export default class Wallet extends EventEmitter {
     });
   }
 
-  private async sendRequest(method: string, params) {
+  private async sendRequest(method: string, params: Record<string, unknown>) {
     if (method !== 'connect' && !this.connected) {
       throw new Error('Wallet not connected');
     }
@@ -171,7 +171,7 @@ export default class Wallet extends EventEmitter {
     await this.handleConnect();
   }
 
-  disconnect = async (): Promise<void> => {
+  async disconnect(): Promise<void> {
     if (this._injectedProvider) {
       await this.sendRequest('disconnect', {});
     }
@@ -179,6 +179,10 @@ export default class Wallet extends EventEmitter {
       this._popup.close();
     }
     this.handleDisconnect();
+  }
+
+  private _beforeUnload = (): void => {
+    void this.disconnect();
   };
 
   async sign(

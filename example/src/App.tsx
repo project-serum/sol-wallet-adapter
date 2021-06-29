@@ -10,7 +10,7 @@ import {
 
 function toHex(buffer: Buffer) {
   return Array.prototype.map
-    .call(buffer, (x) => ('00' + x.toString(16)).slice(-2))
+    .call(buffer, (x: number) => ('00' + x.toString(16)).slice(-2))
     .join('');
 }
 
@@ -29,10 +29,12 @@ function App(): React.ReactElement {
   );
   const injectedWallet = useMemo(() => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return new Wallet((window as any).solana, network);
+      return new Wallet(
+        (window as unknown as { solana: unknown }).solana,
+        network,
+      );
     } catch (e) {
-      console.log(`Could not create injected wallet: ${e}`);
+      console.log(`Could not create injected wallet`, e);
       return null;
     }
   }, [network]);
@@ -44,15 +46,17 @@ function App(): React.ReactElement {
     if (selectedWallet) {
       selectedWallet.on('connect', () => {
         setConnected(true);
-        addLog('Connected to wallet ' + selectedWallet.publicKey?.toBase58());
+        addLog(
+          `Connected to wallet ${selectedWallet.publicKey?.toBase58() ?? '--'}`,
+        );
       });
       selectedWallet.on('disconnect', () => {
         setConnected(false);
         addLog('Disconnected from wallet');
       });
-      selectedWallet.connect();
+      void selectedWallet.connect();
       return () => {
-        selectedWallet.disconnect();
+        void selectedWallet.disconnect();
       };
     }
   }, [selectedWallet]);
@@ -84,7 +88,7 @@ function App(): React.ReactElement {
       addLog('Transaction ' + signature + ' confirmed');
     } catch (e) {
       console.warn(e);
-      addLog('Error: ' + e.message);
+      addLog(`Error: ${(e as Error).message}`);
     }
   }
 
@@ -101,7 +105,7 @@ function App(): React.ReactElement {
       addLog('Got signature: ' + toHex(signed.signature));
     } catch (e) {
       console.warn(e);
-      addLog('Error: ' + e.message);
+      addLog(`Error: ${(e as Error).message}`);
     }
   }
 
