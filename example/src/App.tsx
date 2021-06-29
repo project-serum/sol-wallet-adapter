@@ -24,7 +24,7 @@ function App() {
   ]);
   const injectedWallet = useMemo(() => {
     try {
-      return new Wallet(window.solana, network);
+      return new Wallet((window as any).solana, network);
     } catch (e) {
       console.log(`Could not create injected wallet: ${e}`);
       return null;
@@ -51,7 +51,7 @@ function App() {
 
   async function sendTransaction() {
     try {
-      let transaction = new Transaction().add(
+      const transaction = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: selectedWallet.publicKey,
           toPubkey: selectedWallet.publicKey,
@@ -64,9 +64,9 @@ function App() {
       ).blockhash;
       addLog('Sending signature request to wallet');
       transaction.feePayer = selectedWallet.publicKey;
-      let signed = await selectedWallet.signTransaction(transaction);
+      const signed = await selectedWallet.signTransaction(transaction);
       addLog('Got signature, submitting transaction');
-      let signature = await connection.sendRawTransaction(signed.serialize());
+      const signature = await connection.sendRawTransaction(signed.serialize());
       addLog('Submitted transaction ' + signature + ', awaiting confirmation');
       await connection.confirmTransaction(signature, 'singleGossip');
       addLog('Transaction ' + signature + ' confirmed');

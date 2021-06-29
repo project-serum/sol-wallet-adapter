@@ -7,9 +7,9 @@ export default class Wallet extends EventEmitter {
   private _injectedProvider: any;
   private _publicKey: PublicKey | null = null;
   private _popup: Window | null = null;
-  private _handlerAdded: boolean = false;
-  private _nextRequestId: number = 1;
-  private _autoApprove: boolean = false;
+  private _handlerAdded = false;
+  private _nextRequestId = 1;
+  private _autoApprove = false;
   private _responsePromises: Map<number, [(value: string) => void, (reason: Error) => void]> = new Map();
 
   constructor(provider: any, private _network: string) {
@@ -143,15 +143,15 @@ export default class Wallet extends EventEmitter {
     return this._publicKey !== null;
   }
 
-  get autoApprove() {
+  get autoApprove():boolean {
     return this._autoApprove;
   }
 
-  connect() {
+  async connect(): Promise<void> {
     if (this._popup) {
       this._popup.close();
     }
-    return this.handleConnect();
+    await this.handleConnect();
   }
 
   async disconnect() {
@@ -179,9 +179,9 @@ export default class Wallet extends EventEmitter {
       signature,
       publicKey,
     };
-  };
+  }
 
-  async signTransaction(transaction: Transaction) {
+  async signTransaction(transaction: Transaction): Promise<Transaction> {
     const response = await this.sendRequest('signTransaction', {
       message: bs58.encode(transaction.serializeMessage()),
     }) as {publicKey: string, signature: string};
@@ -191,7 +191,7 @@ export default class Wallet extends EventEmitter {
     return transaction;
   }
 
-  async signAllTransactions(transactions: Transaction[]) {
+  async signAllTransactions(transactions: Transaction[]): Promise<Transaction[]> {
     const response = await this.sendRequest('signAllTransactions', {
       messages: transactions.map((tx) => bs58.encode(tx.serializeMessage())),
     }) as {publicKey: string, signatures: string[]};
@@ -202,7 +202,7 @@ export default class Wallet extends EventEmitter {
       return tx;
     });
     return transactions;
-  };
+  }
 }
 
 function isString(a: any) {

@@ -1,15 +1,10 @@
 {
-  "parser": "babel-eslint",
+  "parser": "@typescript-eslint/parser",
   "extends": [
-    "standard",
-    "standard-react",
-    "plugin:prettier/recommended",
-    "prettier/standard",
-    "prettier/react"
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
   ],
-  "env": {
-    "node": true
-  },
   "parserOptions": {
     "ecmaVersion": 2020,
     "ecmaFeatures": {
