@@ -2,17 +2,22 @@ import EventEmitter from 'eventemitter3';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import bs58 from 'bs58';
 
+type InjectedProvider = { postMessage: (params: unknown) => void };
+
 export default class Wallet extends EventEmitter {
   private _providerUrl: URL | undefined;
-  private _injectedProvider: any;
+  private _injectedProvider?: InjectedProvider;
   private _publicKey: PublicKey | null = null;
   private _popup: Window | null = null;
   private _handlerAdded = false;
   private _nextRequestId = 1;
   private _autoApprove = false;
-  private _responsePromises: Map<number, [(value: string) => void, (reason: Error) => void]> = new Map();
+  private _responsePromises: Map<
+    number,
+    [(value: string) => void, (reason: Error) => void]
+  > = new Map();
 
-  constructor(provider: any, private _network: string) {
+  constructor(provider: unknown, private _network: string) {
     super();
     if (isInjectedProvider(provider)) {
       this._injectedProvider = provider;
@@ -29,7 +34,18 @@ export default class Wallet extends EventEmitter {
     }
   }
 
-  private handleMessage(e: any) {
+  handleMessage = (
+    e: MessageEvent<{
+      id: number;
+      method: string;
+      params: {
+        autoApprove: boolean;
+        publicKey: string;
+      };
+      result?: string;
+      error?: string;
+    }>,
+  ): void => {
     if (
       (this._injectedProvider && e.source === window) ||
       (e.origin === this._providerUrl?.origin && e.source === this._popup)
@@ -47,8 +63,9 @@ export default class Wallet extends EventEmitter {
       } else if (e.data.method === 'disconnected') {
         this.handleDisconnect();
       } else if (e.data.result || e.data.error) {
-        if (this._responsePromises.has(e.data.id)) {
-          const [resolve, reject] = this._responsePromises.get(e.data.id)!;
+        const promises = this._responsePromises.get(e.data.id);
+        if (promises) {
+          const [resolve, reject] = promises;
           if (e.data.result) {
             resolve(e.data.result);
           } else {
@@ -57,13 +74,13 @@ export default class Wallet extends EventEmitter {
         }
       }
     }
-  }
+  };
 
   private handleConnect() {
     if (!this._handlerAdded) {
       this._handlerAdded = true;
-      window.addEventListener('message', this.handleMessage.bind(this));
-      window.addEventListener('beforeunload', this.disconnect.bind(this));
+      window.addEventListener('message', this.handleMessage);
+      window.addEventListener('beforeunload', this.disconnect);
     }
     if (this._injectedProvider) {
       return new Promise<void>((resolve) => {
@@ -87,13 +104,13 @@ export default class Wallet extends EventEmitter {
     if (this._handlerAdded) {
       this._handlerAdded = false;
       window.removeEventListener('message', this.handleMessage);
-      window.removeEventListener('beforeunload', this.handleMessage);
+      window.removeEventListener('beforeunload', this.disconnect);
     }
     if (this._publicKey) {
       this._publicKey = null;
       this.emit('disconnect');
     }
-    this._responsePromises.forEach(([resolve, reject], id) => {
+    this._responsePromises.forEach(([, reject], id) => {
       this._responsePromises.delete(id);
       reject(new Error('Wallet disconnected'));
     });
@@ -135,15 +152,15 @@ export default class Wallet extends EventEmitter {
     });
   }
 
-  get publicKey() {
+  get publicKey(): PublicKey | null {
     return this._publicKey;
   }
 
-  get connected() {
+  get connected(): boolean {
     return this._publicKey !== null;
   }
 
-  get autoApprove():boolean {
+  get autoApprove(): boolean {
     return this._autoApprove;
   }
 
@@ -154,7 +171,7 @@ export default class Wallet extends EventEmitter {
     await this.handleConnect();
   }
 
-  async disconnect() {
+  disconnect = async (): Promise<void> => {
     if (this._injectedProvider) {
       await this.sendRequest('disconnect', {});
     }
@@ -162,17 +179,23 @@ export default class Wallet extends EventEmitter {
       this._popup.close();
     }
     this.handleDisconnect();
-  }
+  };
 
-  async sign(data: Uint8Array, display: any) {
+  async sign(
+    data: Uint8Array,
+    display: unknown,
+  ): Promise<{
+    signature: Buffer;
+    publicKey: PublicKey;
+  }> {
     if (!(data instanceof Uint8Array)) {
       throw new Error('Data must be an instance of Uint8Array');
     }
 
-    const response = await this.sendRequest('sign', {
+    const response = (await this.sendRequest('sign', {
       data,
       display,
-    }) as {publicKey: string, signature: string};
+    })) as { publicKey: string; signature: string };
     const signature = bs58.decode(response.signature);
     const publicKey = new PublicKey(response.publicKey);
     return {
@@ -182,19 +205,21 @@ export default class Wallet extends EventEmitter {
   }
 
   async signTransaction(transaction: Transaction): Promise<Transaction> {
-    const response = await this.sendRequest('signTransaction', {
+    const response = (await this.sendRequest('signTransaction', {
       message: bs58.encode(transaction.serializeMessage()),
-    }) as {publicKey: string, signature: string};
+    })) as { publicKey: string; signature: string };
     const signature = bs58.decode(response.signature);
     const publicKey = new PublicKey(response.publicKey);
     transaction.addSignature(publicKey, signature);
     return transaction;
   }
 
-  async signAllTransactions(transactions: Transaction[]): Promise<Transaction[]> {
-    const response = await this.sendRequest('signAllTransactions', {
+  async signAllTransactions(
+    transactions: Transaction[],
+  ): Promise<Transaction[]> {
+    const response = (await this.sendRequest('signAllTransactions', {
       messages: transactions.map((tx) => bs58.encode(tx.serializeMessage())),
-    }) as {publicKey: string, signatures: string[]};
+    })) as { publicKey: string; signatures: string[] };
     const signatures = response.signatures.map((s) => bs58.decode(s));
     const publicKey = new PublicKey(response.publicKey);
     transactions = transactions.map((tx, idx) => {
@@ -205,18 +230,16 @@ export default class Wallet extends EventEmitter {
   }
 }
 
-function isString(a: any) {
+function isString(a: unknown): a is string {
   return typeof a === 'string';
 }
 
-function isInjectedProvider(a: any) {
-  return isObject(a) && isFunction(a.postMessage);
+function isInjectedProvider(a: unknown): a is InjectedProvider {
+  return (
+    isObject(a) && 'postMessage' in a && typeof a.postMessage === 'function'
+  );
 }
 
-function isObject(a: any) {
+function isObject(a: unknown): a is Record<string, unknown> {
   return typeof a === 'object' && a !== null;
-}
-
-function isFunction(a: any) {
-  return typeof a === 'function';
 }
