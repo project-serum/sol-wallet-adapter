@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import './App.css';
-import Wallet from '@project-serum/sol-wallet-adapter';
+import Wallet from '../../';
 import {
   Connection,
   SystemProgram,
