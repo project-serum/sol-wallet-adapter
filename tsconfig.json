@@ -5,7 +5,11 @@
     "target": "es5",
     "module": "esnext",
     "moduleResolution": "node",
-    "lib": ["es2016", "dom", "es5"],
+    "lib": [
+      "es2016",
+      "dom",
+      "es5"
+    ],
     "downlevelIteration": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -14,11 +18,16 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noImplicitAny": false,
-    "jsx": "react",
-    "types": ["jest"],
+    "jsx": "react-jsx",
+    "types": [
+      "jest"
+    ],
     "noEmit": true,
     "allowJs": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/", "example/src/"]
+  "include": [
+    "src/",
+    "example/src/"
+  ]
 }
