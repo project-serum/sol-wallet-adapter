@@ -26,6 +26,11 @@ wallet.on('connect', publicKey => console.log('Connected to ' + publicKey.toBase
 wallet.on('disconnect', () => console.log('Disconnected'));
 await wallet.connect();
 
+// In call SystemProgram.transfer, TransferParams type requires a not null publicKey
+if (wallet.publicKey == null) {
+    throw new Error('wallet not connected');
+}
+
 let transaction = new Transaction().add(
   SystemProgram.transfer({
     fromPubkey: wallet.publicKey,
