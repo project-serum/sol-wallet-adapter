@@ -41,7 +41,7 @@ let txid = await connection.sendRawTransaction(signed.serialize());
 await connection.confirmTransaction(txid);
 ```
 
-See [example/src/App.js](https://github.com/serum-foundation/sol-wallet-adapter/blob/master/example/src/App.js) for a full example.
+See [example/src/App.tsx](https://github.com/serum-foundation/sol-wallet-adapter/blob/master/example/src/App.tsx) for a full example.
 
 ### Sign a message
 
