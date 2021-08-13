@@ -49,7 +49,6 @@ See [example/src/App.js](https://github.com/serum-foundation/sol-wallet-adapter/
 import { Connection, SystemProgram, Transaction, clusterApiUrl } from '@solana/web3.js';
 
 const network = clusterApiUrl('devnet');
-let connection = new Connection(network);
 const providerUrl = 'https://www.sollet.io';
 const wallet = new Wallet(providerUrl, network);
 wallet.on('connect', publicKey => console.log('Connected to ' + publicKey.toBase58()));
