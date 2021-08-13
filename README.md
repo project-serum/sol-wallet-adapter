@@ -18,9 +18,10 @@ npm install --save @project-serum/sol-wallet-adapter
 ```js
 import { Connection, SystemProgram, Transaction, clusterApiUrl } from '@solana/web3.js';
 
-let connection = new Connection(clusterApiUrl('devnet'));
+const network = clusterApiUrl('devnet');
+let connection = new Connection(network);
 let providerUrl = 'https://www.sollet.io';
-let wallet = new Wallet(providerUrl);
+let wallet = new Wallet(providerUrl, network);
 wallet.on('connect', publicKey => console.log('Connected to ' + publicKey.toBase58()));
 wallet.on('disconnect', () => console.log('Disconnected'));
 await wallet.connect();
@@ -45,8 +46,12 @@ See [example/src/App.js](https://github.com/serum-foundation/sol-wallet-adapter/
 ### Sign a message
 
 ```js
+import { Connection, SystemProgram, Transaction, clusterApiUrl } from '@solana/web3.js';
+
+const network = clusterApiUrl('devnet');
+let connection = new Connection(network);
 const providerUrl = 'https://www.sollet.io';
-const wallet = new Wallet(providerUrl);
+const wallet = new Wallet(providerUrl, network);
 wallet.on('connect', publicKey => console.log('Connected to ' + publicKey.toBase58()));
 wallet.on('disconnect', () => console.log('Disconnected'));
 await wallet.connect();
