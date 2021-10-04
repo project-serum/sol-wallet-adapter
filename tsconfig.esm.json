@@ -1,8 +1,14 @@
 {
-  "extends": "./tsconfig.build.json",
+  "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "dist/esm/",
-    "target": "ES6",
-    "module": "ESNext"
-  }
+    "target": "ES2015",
+    "module": "ESNext",
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "include": ["src/"],
+  "exclude": ["**/*.test.ts"]
 }

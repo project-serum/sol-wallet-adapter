@@ -10,7 +10,7 @@
     "node": ">=10"
   },
   "scripts": {
-    "build": "rm -rf dist && tsc -P tsconfig.build.json && tsc -P tsconfig.esm.json",
+    "build": "rm -rf dist && tsc -P tsconfig.cjs.json && tsc -P tsconfig.esm.json",
     "start": "tsc --watch",
     "clean": "rm -rf dist",
     "prepare": "run-s clean build",
@@ -48,6 +48,7 @@
   ],
   "dependencies": {
     "bs58": "^4.0.1",
-    "eventemitter3": "^4.0.7"
+    "eventemitter3": "^4.0.7",
+    "tslib": "^2.3.1"
   }
 }
