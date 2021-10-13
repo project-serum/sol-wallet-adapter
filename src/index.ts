@@ -232,6 +232,21 @@ export default class Wallet extends EventEmitter {
     });
     return transactions;
   }
+
+  async diffieHellman(
+    publicKey: Uint8Array,
+  ): Promise<{ publicKey: Uint8Array; secretKey: Uint8Array }> {
+    if (!(publicKey instanceof Uint8Array)) {
+      throw new Error('Data must be an instance of Uint8Array');
+    }
+    const response = (await this.sendRequest('diffieHellman', {
+      publicKey,
+    })) as {
+      publicKey: Uint8Array;
+      secretKey: Uint8Array;
+    };
+    return response;
+  }
 }
 
 function isString(a: unknown): a is string {
