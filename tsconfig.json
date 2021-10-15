@@ -3,7 +3,6 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": "./src",
     "target": "es5",
-    "module": "esnext",
     "moduleResolution": "node",
     "lib": [
       "es2016",
@@ -24,7 +23,8 @@
     ],
     "noEmit": true,
     "allowJs": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "importHelpers": true
   },
   "include": [
     "src/",
