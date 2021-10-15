@@ -18,12 +18,18 @@ npm install --save @project-serum/sol-wallet-adapter
 ```js
 import { Connection, SystemProgram, Transaction, clusterApiUrl } from '@solana/web3.js';
 
-let connection = new Connection(clusterApiUrl('devnet'));
+const network = clusterApiUrl('devnet');
+let connection = new Connection(network);
 let providerUrl = 'https://www.sollet.io';
-let wallet = new Wallet(providerUrl);
+let wallet = new Wallet(providerUrl, network);
 wallet.on('connect', publicKey => console.log('Connected to ' + publicKey.toBase58()));
 wallet.on('disconnect', () => console.log('Disconnected'));
 await wallet.connect();
+
+// In call SystemProgram.transfer, TransferParams type requires a not null publicKey
+if (wallet.publicKey == null) {
+    throw new Error('wallet not connected');
+}
 
 let transaction = new Transaction().add(
   SystemProgram.transfer({
@@ -40,13 +46,16 @@ let txid = await connection.sendRawTransaction(signed.serialize());
 await connection.confirmTransaction(txid);
 ```
 
-See [example/src/App.js](https://github.com/serum-foundation/sol-wallet-adapter/blob/master/example/src/App.js) for a full example.
+See [example/src/App.tsx](https://github.com/serum-foundation/sol-wallet-adapter/blob/master/example/src/App.tsx) for a full example.
 
 ### Sign a message
 
 ```js
+import { Connection, SystemProgram, Transaction, clusterApiUrl } from '@solana/web3.js';
+
+const network = clusterApiUrl('devnet');
 const providerUrl = 'https://www.sollet.io';
-const wallet = new Wallet(providerUrl);
+const wallet = new Wallet(providerUrl, network);
 wallet.on('connect', publicKey => console.log('Connected to ' + publicKey.toBase58()));
 wallet.on('disconnect', () => console.log('Disconnected'));
 await wallet.connect();
