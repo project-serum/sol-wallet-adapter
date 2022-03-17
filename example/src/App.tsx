@@ -30,7 +30,7 @@ function App(): React.ReactElement {
   const injectedWallet = useMemo(() => {
     try {
       return new Wallet(
-        (window as unknown as { solana: unknown }).solana,
+        (window as unknown as { sollet: unknown }).sollet,
         network,
       );
     } catch (e) {
